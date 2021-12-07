@@ -3,6 +3,7 @@ import os
 
 import requests
 from requests.models import HTTPError
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger('logger_main')
 
@@ -10,6 +11,16 @@ def check_for_redirect(response):
     if response.history:
         raise HTTPError
 
+def get_book(id):
+    url = f'https://tululu.org/b{id}'
+    response = requests.get(url)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, 'lxml')
+    title, author = (el.strip() for el in soup.find('h1').text.split('::'))
+    print(title, author)
+
+def main1():
+    get_book(1)
 
 def load_book(id, filename):
     url = f'https://tululu.org/txt.php?id={id}'
@@ -42,4 +53,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main1()
