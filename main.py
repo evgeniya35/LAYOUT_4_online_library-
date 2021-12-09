@@ -3,6 +3,7 @@ import os
 
 import requests
 
+from pprint import pprint
 from urllib.parse import urljoin, urlparse
 
 from pathvalidate import sanitize_filename
@@ -28,8 +29,15 @@ def parse_book_page(book_id):
     cover_url = urljoin(url, soup.find('div', class_='bookimage').find('img')['src'])
     comments = [comment.text.split(')')[1] for comment in soup.find_all('div', class_='texts')]
     genres = [genre.text for genre in soup.find('span', class_='d_book').find_all('a')]
+    book = {
+        'Заголовок': title,
+        'Автор': author,
+        'Обложка': cover_url,
+        'Жанр': genres,
+        'Комментарии': comments
+    }
     logger.info(f'Parse book page {book_id}')
-    return title, cover_url, comments, genres
+    return book
 
 
 def make_filename(id, title, folder='books'):
@@ -71,8 +79,8 @@ def main():
     os.makedirs(folder, exist_ok=True)
     for book_id in range(1, 11):
         try:
-            title, cover_url, comments = parse_book_page(book_id)
-            #print(title, '\n'.join(comments))
+            book = parse_book_page(book_id)
+            pprint(book)
             # filename = make_filename(book_id, title, folder)
             # download_cover(cover_url, folder)
             # download_book(folder, filename, book_id)
