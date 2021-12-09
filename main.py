@@ -27,8 +27,9 @@ def parse_book_page(book_id):
     title, author = (el.strip() for el in soup.find('h1').text.split('::'))
     cover_url = urljoin(url, soup.find('div', class_='bookimage').find('img')['src'])
     comments = [comment.text.split(')')[1] for comment in soup.find_all('div', class_='texts')]
+    genres = [genre.text for genre in soup.find('span', class_='d_book').find_all('a')]
     logger.info(f'Parse book page {book_id}')
-    return title, cover_url, comments
+    return title, cover_url, comments, genres
 
 
 def make_filename(id, title, folder='books'):
@@ -71,7 +72,7 @@ def main():
     for book_id in range(1, 11):
         try:
             title, cover_url, comments = parse_book_page(book_id)
-            print(title, '\n'.join(comments))
+            #print(title, '\n'.join(comments))
             # filename = make_filename(book_id, title, folder)
             # download_cover(cover_url, folder)
             # download_book(folder, filename, book_id)
