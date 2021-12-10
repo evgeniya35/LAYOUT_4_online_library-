@@ -1,6 +1,8 @@
 import logging
 import os
 
+import argparse
+from urllib import parse
 import requests
 
 from pprint import pprint
@@ -29,6 +31,7 @@ def parse_book_page(book_id):
     cover_url = urljoin(url, soup.find('div', class_='bookimage').find('img')['src'])
     comments = [comment.text.split(')')[1] for comment in soup.find_all('div', class_='texts')]
     genres = [genre.text for genre in soup.find('span', class_='d_book').find_all('a')]
+    # парсить ссылку на txt
     book = {
         'Заголовок': title,
         'Автор': author,
@@ -62,6 +65,7 @@ def download_book(folder, filename, id):
     url = f'https://tululu.org/txt.php?id={id}'
     response = requests.get(url)
     response.raise_for_status()
+    check_for_redirect(response)
     with open(filename, 'wb') as file:
         file.write(response.content)
     logger.info(f'Download book {filename}')
@@ -71,7 +75,11 @@ def main():
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )    
+    )
+    parser = argparse.ArgumentParser(description='Программа загрузки книг')
+    parser.add_argument('--start_id', help='С какого номера книги загружать')
+    parser.add_argument('--end_id', help='По какой номер книги загружать')
+    parser.parse_args()
     folder = os.path.join(
         os.path.dirname(__file__),
         'books'
@@ -79,12 +87,11 @@ def main():
     os.makedirs(folder, exist_ok=True)
     for book_id in range(1, 11):
         try:
-            book = parse_book_page(book_id)
-            pprint(book)
-            # filename = make_filename(book_id, title, folder)
-            # download_cover(cover_url, folder)
-            # download_book(folder, filename, book_id)
-
+            pass
+            #book = parse_book_page(book_id)
+            #filename = make_filename(book_id, book['Заголовок'], folder)
+            #download_cover(book['Обложка'], folder)
+            #download_book(folder, filename, book_id)
         except HTTPError:
             logger.info(f'No book for {book_id}')
 
