@@ -21,28 +21,6 @@ def check_for_redirect(response):
         raise HTTPError
 
 
-def parse_book_page(book_id):
-    url = f'https://tululu.org/b{book_id}/'
-    response = requests.get(url)
-    response.raise_for_status()
-    check_for_redirect(response)
-    soup = BeautifulSoup(response.text, 'lxml')
-    title, author = (el.strip() for el in soup.find('h1').text.split('::'))
-    cover_url = urljoin(url, soup.find('div', class_='bookimage').find('img')['src'])
-    comments = [comment.text.split(')')[1] for comment in soup.find_all('div', class_='texts')]
-    genres = [genre.text for genre in soup.find('span', class_='d_book').find_all('a')]
-    # парсить ссылку на txt
-    book = {
-        'Заголовок': title,
-        'Автор': author,
-        'Обложка': cover_url,
-        'Жанр': genres,
-        'Комментарии': comments
-    }
-    logger.info(f'Parse book page {book_id}')
-    return book
-
-
 def make_filename(id, title, folder='books'):
     filename = f'{id}. {sanitize_filename(title)}.txt'
     return os.path.join(folder, filename)
@@ -71,6 +49,29 @@ def download_book(folder, filename, id):
     logger.info(f'Download book {filename}')
 
 
+def parse_book_page(book_id):
+    url = f'https://tululu.org/b{book_id}/'
+    response = requests.get(url)
+    response.raise_for_status()
+    check_for_redirect(response)
+    soup = BeautifulSoup(response.text, 'lxml')
+    title, author = (el.strip() for el in soup.find('h1').text.split('::'))
+    cover_url = urljoin(url, soup.find('div', class_='bookimage').find('img')['src'])
+    comments = [comment.text.split(')')[1] for comment in soup.find_all('div', class_='texts')]
+    genres = [genre.text for genre in soup.find('span', class_='d_book').find_all('a')]
+    links = [lnk.text for lnk in soup.find('table', class_='d_book').find_all('a')]
+    print(links)
+    # парсить ссылку на txt
+    book = {
+        'Заголовок': title,
+        'Автор': author,
+        'Обложка': cover_url,
+        'Жанр': genres,
+        'Комментарии': comments
+    }
+    logger.info(f'Parse book page {book_id}')
+    return book
+
 def main():
     logging.basicConfig(
         level=logging.INFO,
@@ -85,10 +86,9 @@ def main():
         'books'
         )
     os.makedirs(folder, exist_ok=True)
-    for book_id in range(1, 11):
+    for book_id in range(9, 10):
         try:
-            pass
-            #book = parse_book_page(book_id)
+            book = parse_book_page(book_id)
             #filename = make_filename(book_id, book['Заголовок'], folder)
             #download_cover(book['Обложка'], folder)
             #download_book(folder, filename, book_id)
