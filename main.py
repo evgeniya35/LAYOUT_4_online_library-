@@ -1,13 +1,11 @@
+import argparse
 import logging
 import os
 
-import argparse
-from urllib import parse
 import requests
 
-from pprint import pprint
+from urllib import parse
 from urllib.parse import urljoin, urlparse
-
 from pathvalidate import sanitize_filename
 from requests.exceptions import HTTPError
 from bs4 import BeautifulSoup
@@ -60,8 +58,7 @@ def parse_book_page(book_id):
     comments = [comment.text.split(')')[1] for comment in soup.find_all('div', class_='texts')]
     genres = [genre.text for genre in soup.find('span', class_='d_book').find_all('a')]
     links = [lnk.text for lnk in soup.find('table', class_='d_book').find_all('a')]
-    print(links)
-    # парсить ссылку на txt
+    # ToDo print(links) парсить ссылку на txt
     book = {
         'Заголовок': title,
         'Автор': author,
@@ -72,14 +69,15 @@ def parse_book_page(book_id):
     logger.info(f'Parse book page {book_id}')
     return book
 
+
 def main():
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     parser = argparse.ArgumentParser(description='Программа загрузки книг')
-    parser.add_argument('--start_id', type=int, help='С какого номера книги загружать')
-    parser.add_argument('--end_id', type=int, help='По какой номер книги загружать')
+    parser.add_argument('--start_id', type=int, default=1, help='С какого номера книги загружать')
+    parser.add_argument('--end_id', type=int, default=9, help='По какой номер книги загружать')
     args = parser.parse_args()
     folder = os.path.join(
         os.path.dirname(__file__),
