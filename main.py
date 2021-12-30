@@ -78,20 +78,20 @@ def main():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     parser = argparse.ArgumentParser(description='Программа загрузки книг')
-    parser.add_argument('--start_id', help='С какого номера книги загружать')
-    parser.add_argument('--end_id', help='По какой номер книги загружать')
-    parser.parse_args()
+    parser.add_argument('--start_id', type=int, help='С какого номера книги загружать')
+    parser.add_argument('--end_id', type=int, help='По какой номер книги загружать')
+    args = parser.parse_args()
     folder = os.path.join(
         os.path.dirname(__file__),
         'books'
         )
     os.makedirs(folder, exist_ok=True)
-    for book_id in range(9, 10):
+    for book_id in range(args.start_id, args.end_id):
         try:
             book = parse_book_page(book_id)
-            #filename = make_filename(book_id, book['Заголовок'], folder)
-            #download_cover(book['Обложка'], folder)
-            #download_book(folder, filename, book_id)
+            filename = make_filename(book_id, book['Заголовок'], folder)
+            download_cover(book['Обложка'], folder)
+            download_book(folder, filename, book_id)
         except HTTPError:
             logger.info(f'No book for {book_id}')
 
