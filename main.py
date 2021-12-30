@@ -76,8 +76,8 @@ def main():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     parser = argparse.ArgumentParser(description='Программа загрузки книг')
-    parser.add_argument('--start_id', type=int, default=1, help='С какого номера книги загружать')
-    parser.add_argument('--end_id', type=int, default=9, help='По какой номер книги загружать')
+    parser.add_argument('--start_id', type=int, default=1, help='С какого номера книги загружать, по умолчанию 1')
+    parser.add_argument('--end_id', type=int, default=9, help='По какой номер книги загружать, по умолчанию 9')
     args = parser.parse_args()
     folder = os.path.join(
         os.path.dirname(__file__),
