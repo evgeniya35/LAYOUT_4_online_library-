@@ -38,8 +38,9 @@ def download_cover(cover_url, folder='books'):
 
 
 def download_book(folder, filename, id):
-    url = f'https://tululu.org/txt.php?id={id}'
-    response = requests.get(url)
+    payload = {'id': id}
+    url = 'https://tululu.org/txt.php'
+    response = requests.get(url, params=payload)
     response.raise_for_status()
     check_for_redirect(response)
     with open(filename, 'wb') as file:
