@@ -43,8 +43,8 @@ def download_book(folder, filename, id):
     response = requests.get(url, params=payload)
     response.raise_for_status()
     check_for_redirect(response)
-    with open(filename, 'wb') as file:
-        file.write(response.content)
+    with open(filename, 'w') as file:
+        file.write(response.text)
     logger.info(f'Download book {filename}')
 
 
