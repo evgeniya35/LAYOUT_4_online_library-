@@ -29,7 +29,7 @@ def download_cover(cover_url, folder='books'):
         folder,
         urlparse(cover_url).path.split('/')[-1]
     )
-    if not os.path.isfile(filename):
+    if not os.path.exists(filename):
         response = requests.get(cover_url)
         response.raise_for_status()
         logger.info(f'Download cover {filename}')
@@ -37,13 +37,13 @@ def download_cover(cover_url, folder='books'):
             file.write(response.content)
 
 
-def download_book(folder, filename, id):
+def download_book(filename, id):
     payload = {'id': id}
     url = 'https://tululu.org/txt.php'
     response = requests.get(url, params=payload)
     response.raise_for_status()
     check_for_redirect(response)
-    with open(filename, 'w') as file:
+    with open(filename, 'w', encoding='utf-8') as file:
         file.write(response.text)
     logger.info(f'Download book {filename}')
 
@@ -90,7 +90,7 @@ def main():
             book = parse_book_page(book_id)
             filename = make_filename(book_id, book['Заголовок'], folder)
             download_cover(book['Обложка'], folder)
-            download_book(folder, filename, book_id)
+            download_book(filename, book_id)
         except HTTPError:
             logger.info(f'No book for {book_id}')
 
