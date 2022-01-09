@@ -65,11 +65,11 @@ def parse_book_page(url):
     response.raise_for_status()
     check_for_redirect(response)
     soup = BeautifulSoup(response.text, 'lxml')
-    title, author = (el.strip() for el in soup.find('h1').text.split('::'))
-    cover_url = urljoin(url, soup.find('div', class_='bookimage').find('img')['src'])
-    comments = [comment.text.split(')')[1] for comment in soup.find_all('div', class_='texts')]
-    genres = [genre.text for genre in soup.find('span', class_='d_book').find_all('a')]
-    links = [lnk.text for lnk in soup.find('table', class_='d_book').find_all('a')]
+    title, author = (el.strip() for el in soup.select_one('h1').text.split('::'))
+    cover_url = urljoin(url, soup.select_one('div.bookimage img')['src'])
+    comments = [comment.text.split(')')[1] for comment in soup.select('div.texts')]
+    genres = [genre.text for genre in soup.select('span.d_book a')]
+    links = [lnk.text for lnk in soup.select('table.d_book a')]
     # ToDo print(links) парсить ссылку на txt
     book = {
         'title': title,
@@ -102,8 +102,8 @@ def main():
     books = []
     for page_num in range(1, max_pages):
         page = fetch_pages(f'{site}/{page_num}/')
-        for book_tag in page.find_all('table', class_='d_book'):
-            book_id = book_tag.find('a')['href']
+        for book_tag in page.select('table.d_book'):
+            book_id = book_tag.select_one('a')['href']
             book_url = urljoin(site, book_id)
             try:
                 book = parse_book_page(book_url)
