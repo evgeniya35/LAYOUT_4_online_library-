@@ -1,10 +1,11 @@
+import argparse
 import logging
 import os
 import json
 
 import requests
 
-from pprint import pp, pprint
+from itertools import count
 from urllib.parse import urljoin, urlparse
 from pathvalidate import sanitize_filename
 from requests.exceptions import HTTPError
@@ -12,6 +13,7 @@ from bs4 import BeautifulSoup
 
 
 logger = logging.getLogger('logger_main')
+
 
 def make_filename(title, folder='books'):
     filename = f'{sanitize_filename(title)}.txt'
@@ -29,7 +31,7 @@ def download_cover(cover_url, folder='images'):
         urlparse(cover_url).path.split('/')[-1]
     )
     if os.path.exists(filename):
-        logger.info(f'Exist cover {filename}')    
+        logger.info(f'Exist cover {filename}')
         return filename
     response = requests.get(cover_url)
     response.raise_for_status()
@@ -41,7 +43,7 @@ def download_cover(cover_url, folder='images'):
 
 def download_book(filename, id):
     if os.path.exists(filename):
-        logger.info(f'Exist book {filename}')    
+        logger.info(f'Exist book {filename}')
         return filename
     payload = {'id': int(''.join(list(filter(lambda x: x.isdigit(), id))))}
     url = 'https://tululu.org/txt.php'
@@ -54,10 +56,25 @@ def download_book(filename, id):
     return filename
 
 
-def fetch_pages(url):
-    response = requests.get(url)
+def end_page_num():
+    response = requests.get('https://tululu.org/l55/')
     response.raise_for_status()
-    return BeautifulSoup(response.text, 'lxml')
+    soup = BeautifulSoup(response.text, 'lxml')
+    return int(soup.select_one('a.npage:last-child').text)
+
+
+def fill_books_urls(start_page, end_page):
+    books_urls = []
+    for page in range(start_page, end_page):
+        page_response = requests.get(
+            'https://tululu.org/l55/',
+            params={'page': page})
+        page_response.raise_for_status()
+        soup = BeautifulSoup(page_response.text, 'lxml')
+        for book_tag in soup.select('table.d_book'):
+            book_id = book_tag.select_one('a')['href']
+            books_urls.append(urljoin('https://tululu.org/', book_id))
+    return books_urls
 
 
 def parse_book_page(url):
@@ -87,36 +104,52 @@ def main():
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
+    parser = argparse.ArgumentParser(description='Программа скачивания книг')
+    parser.add_argument('--start_page', type=int, default=1, help='С какого номера страницы скачивать, по умолчанию - 1')
+    parser.add_argument('--end_page', type=int, help='По какой номер страницы скачивать, по умолчанию - последняя')
+    parser.add_argument('--dest_folder', default='media', help='Каталог куда размещать, по умолчанию - media')
+    parser.add_argument('--skip_img', action='store_true', help='Не скачивать картинки')
+    parser.add_argument('--skip_txt', action='store_true', help='Не скачивать книгу')
+    parser.add_argument('--json_path', default='', help='Путь к файлу с описаниями книг')
+    args = parser.parse_args()
+    if not args.end_page: args.end_page = end_page_num() + 1
+
     books_folder = os.path.join(
         os.path.dirname(__file__),
+        args.dest_folder,
         'books'
         )
     os.makedirs(books_folder, exist_ok=True)
     images_folder = os.path.join(
         os.path.dirname(__file__),
+        args.dest_folder,
         'images'
         )
     os.makedirs(images_folder, exist_ok=True)
-    site = 'http://tululu.org/l55/'
-    max_pages = 2
+    json_folder = os.path.join(
+        os.path.dirname(__file__),
+        args.json_path
+        )
+    os.makedirs(json_folder, exist_ok=True)
+
+    books_urls = fill_books_urls(args.start_page, args.end_page)
+
     books = []
-    for page_num in range(1, max_pages):
-        page = fetch_pages(f'{site}/{page_num}/')
-        for book_tag in page.select('table.d_book'):
-            book_id = book_tag.select_one('a')['href']
-            book_url = urljoin(site, book_id)
-            try:
-                book = parse_book_page(book_url)
-                filename = make_filename(book['title'], books_folder)
+    for url in books_urls:
+        try:
+            book = parse_book_page(url)
+            filename = make_filename(book['title'], books_folder)
+            if not args.skip_img:
                 book['img_src'] = download_cover(book['img_src'], images_folder)
-                book['book_path'] = download_book(filename, book_id)
-                books.append(book)
-            except HTTPError:
-                logger.info(f'No book for {book_url}')
-    if books:
-        with open(os.path.join(os.path.dirname(__file__), 'books.json'), 'w', encoding='utf-8') as file:
-            json.dump(books, file, ensure_ascii=False)
-        
+            if not args.skip_txt:
+                book['book_path'] = download_book(filename, urlparse(url).path)
+            books.append(book)
+        except HTTPError:
+            logger.info(f'No book for {url}')
+
+    with open(os.path.join(json_folder, 'books.json'), 'w', encoding='utf-8') as file:
+        json.dump(books, file, ensure_ascii=False)
+
 
 if __name__ == '__main__':
     main()
