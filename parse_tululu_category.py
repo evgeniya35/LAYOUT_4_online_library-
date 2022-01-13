@@ -60,7 +60,7 @@ def end_page_num():
     response = requests.get('https://tululu.org/l55/')
     response.raise_for_status()
     soup = BeautifulSoup(response.text, 'lxml')
-    return int(soup.select_one('a.npage:last-child').text)
+    return int(soup.select_one('a.npage:last-child').text) + 1
 
 
 def fill_books_urls(start_page, end_page):
@@ -74,6 +74,7 @@ def fill_books_urls(start_page, end_page):
         for book_tag in soup.select('table.d_book'):
             book_id = book_tag.select_one('a')['href']
             books_urls.append(urljoin('https://tululu.org/', book_id))
+        logger.info(f'Process page {page}')
     return books_urls
 
 
@@ -106,13 +107,12 @@ def main():
     )
     parser = argparse.ArgumentParser(description='Программа скачивания книг')
     parser.add_argument('--start_page', type=int, default=1, help='С какого номера страницы скачивать, по умолчанию - 1')
-    parser.add_argument('--end_page', type=int, help='По какой номер страницы скачивать, по умолчанию - последняя')
+    parser.add_argument('--end_page', type=int, default=end_page_num(), help='По какой номер страницы скачивать, по умолчанию - последняя')
     parser.add_argument('--dest_folder', default='media', help='Каталог куда размещать, по умолчанию - media')
     parser.add_argument('--skip_img', action='store_true', help='Не скачивать картинки')
     parser.add_argument('--skip_txt', action='store_true', help='Не скачивать книгу')
-    parser.add_argument('--json_path', default='', help='Путь к файлу с описаниями книг')
+    parser.add_argument('--json_path', default='.', help='Путь к файлу с описаниями книг')
     args = parser.parse_args()
-    if not args.end_page: args.end_page = end_page_num() + 1
 
     books_folder = os.path.join(
         os.path.dirname(__file__),
