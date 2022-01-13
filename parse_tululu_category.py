@@ -41,11 +41,11 @@ def download_cover(cover_url, folder='images'):
     return filename
 
 
-def download_book(filename, id):
+def download_book(filename, book_id):
     if os.path.exists(filename):
         logger.info(f'Exist book {filename}')
         return filename
-    payload = {'id': int(''.join(list(filter(lambda x: x.isdigit(), id))))}
+    payload = {'id': int(''.join(list(filter(lambda x: x.isdigit(), book_id))))}
     url = 'https://tululu.org/txt.php'
     response = requests.get(url, params=payload)
     response.raise_for_status()
@@ -63,7 +63,7 @@ def end_page_num():
     return int(soup.select_one('a.npage:last-child').text) + 1
 
 
-def fill_books_urls(start_page, end_page):
+def get_books_urls(start_page, end_page):
     books_urls = []
     for page in range(start_page, end_page):
         page_response = requests.get(
@@ -132,7 +132,7 @@ def main():
         )
     os.makedirs(json_folder, exist_ok=True)
 
-    books_urls = fill_books_urls(args.start_page, args.end_page)
+    books_urls = get_books_urls(args.start_page, args.end_page)
 
     books = []
     for url in books_urls:
