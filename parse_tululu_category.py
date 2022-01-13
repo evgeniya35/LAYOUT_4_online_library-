@@ -45,7 +45,7 @@ def download_book(filename, book_id):
     if os.path.exists(filename):
         logger.info(f'Exist book {filename}')
         return filename
-    payload = {'id': int(''.join(list(filter(lambda x: x.isdigit(), book_id))))}
+    payload = {'id': ''.join(list(filter(lambda x: x.isdigit(), book_id)))}
     url = 'https://tululu.org/txt.php'
     response = requests.get(url, params=payload)
     response.raise_for_status()
