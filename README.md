@@ -10,7 +10,7 @@ Python должен быть установлен.
 ### Установка
 Установите программу из репозитория:
 ```bash
-git clone https://github.com/evgeniya35/online_library.git
+git clone https://github.com/evgeniya35/LAYOUT_4_online_library-.git
 ```
 
 ### Зависимости
